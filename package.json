@@ -1,0 +1,52 @@
+{
+  "name": "feed-table",
+  "version": "2.0.0",
+  "description": "",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "Apache-2.0",
+  "author": "Kent Steiner",
+  "dependencies": {
+    "axios": "^0.5.2",
+    "bcrypt-nodejs": "latest",
+    "body-parser": "~1.0.0",
+    "connect-flash": "~0.1.1",
+    "connect-redis": "^2.3.0",
+    "cookie-parser": "~1.0.0",
+    "express": "^4.0.0",
+    "express-handlebars": "^1.2.2",
+    "express-session": "~1.0.0",
+    "flux": "^2.0.1",
+    "jquery": "^2.1.3",
+    "method-override": "~1.0.0",
+    "moment": "^2.9.0",
+    "moment-timezone": "^0.3.0",
+    "mongoose-types": "^1.0.3",
+    "morgan": "~1.0.0",
+    "object-merge": "^2.5.1",
+    "passport": "^0.2.2",
+    "passport-facebook": "*",
+    "passport-google-oauth": "*",
+    "passport-local": "*",
+    "passport-twitter": "*",
+    "passport.socketio": "^3.5.1",
+    "react": "^0.13.0",
+    "serve-favicon": "^2.3.0",
+    "socket.io": "^1.3.5",
+    "underscore": "^1.7.0"
+  },
+  "devDependencies": {
+    "jsx-loader": "*",
+    "webpack": "*"
+  },
+  "_devDependencies_storage": {
+    "_jsx-loader": "^0.12.2",
+    "_webpack": "^1.5.3"
+  },
+  "dependenciesMetByParent": {
+    "mongoose": "~3.8.1"
+  }
+}

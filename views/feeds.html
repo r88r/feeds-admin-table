@@ -1,0 +1,11 @@
+<a href="/logout" class="button tiny right">Logout</a>
+<div class="row">
+<div class="large-11 medium-11 columns large-centered medium-centered">
+	<div id="app"></div>
+</div>
+</div>
+<script type="text/javascript">
+var passthru_data; try { passthru_data = JSON.parse('{{passthru}}'); } catch (e) { passthru_data = null; };
+</script>
+<script src="/js/shared.js"></script>
+<script src="/js/{{bundlename}}.bundle.js"></script>

@@ -1,0 +1,36 @@
+<div class="large-8 columns">
+
+	<h1><span class="fa fa-sign-in"></span> Signup</h1>
+
+	{{#if message}}
+		<div class="alert alert-danger">{{message}}</div>
+	{{/if}}
+
+	<!-- LOGIN FORM -->
+	<form action="/kf-signup" method="post">
+		<div class="form-group">
+			<label>Email</label>
+			<input type="text" class="form-control" name="email">
+		</div>
+		<div class="form-group">
+			<label>Password</label>
+			<input type="password" class="form-control" name="password">
+		</div>
+		<div class="form-group">
+			<label>Token</label>
+			<input type="password" class="form-control" name="token">
+		</div>
+
+		<button type="submit" class="button warning">Signup</button>
+	</form>
+
+	<hr>
+
+	<p>Already have an account? <a href="/login">Login</a></p>
+	<p>Or go <a href="/">home</a>.</p>
+
+</div>
+
+	<style>
+		body 		{ padding-top:80px; }
+	</style>
