@@ -21442,30 +21442,27 @@ webpackJsonp([0,1],[
 	****/
 	var FixedDataTableDB = function() {
 		var args = Array.prototype.slice.call(arguments);
-		console.log('try to find '+args[1]+' ... current val: '+args[0]);
 		if (args[0] === undefined && typeof args[1] === 'string' && typeof args[2] === 'object') {
 			return new muDB(args[2]).get(args[1]);
 		}
-		console.log('didnot find it, returning original val');
 		return args[0];
 	}
 
-	FixedDataTableDB.objectify = function(args) {
+	FixedDataTableDB.objectify = function() {
 		return {
-			cellData: args[0],
-			cellDataKey: args[1],
-			rowData: args[2],
-			rowIndex: args[3],
-			columnData: args[4],
-			width: args[5]
+			cellData: arguments[0],
+			cellDataKey: arguments[1],
+			rowData: arguments[2],
+			rowIndex: arguments[3],
+			columnData: arguments[4],
+			width: arguments[5]
 		}
 	}
 
 	var RenderSpecialCell = function() {
-		var args = Array.prototype.slice.call(arguments)
-			, params = FixedDataTableDB.objectify(args);
-
-		switch (args[1]) {
+		var params = FixedDataTableDB.objectify.apply(null, arguments);
+		
+		switch (params.cellDataKey) {
 			case 'webpage':
 				var url = params.cellData || '';
 				var shorted = url.replace('http://','').replace('https://','').replace('www.','').split('/')[0];
@@ -21484,7 +21481,7 @@ webpackJsonp([0,1],[
 				break;
 			
 			default:
-				return FixedDataTableDB(arguments);
+				return FixedDataTableDB.apply(null, arguments);
 				break;
 		}
 		
@@ -21578,6 +21575,8 @@ webpackJsonp([0,1],[
 									break;
 							}
 							
+						} else {
+							cellRenderer = RenderSpecialCell;
 						}
 					
 						var fixed = cgIDX == 0;
@@ -21585,7 +21584,7 @@ webpackJsonp([0,1],[
 						return (
 							React.createElement(Column, {
 								key: "col-"+cIDX, 
-								align: "left", 
+								align: COL.align || "left", 
 								label: COL.displayName, 
 								width: COL.width || 100, 
 								minWidth: COL.minWidth || 50, 
@@ -21714,7 +21713,19 @@ webpackJsonp([0,1],[
 					},
 					{
 						dataKey: "endpoints.json",
-						displayName: "JSON URL"
+						displayName: "JSON URL",
+						align: "center",
+						customComponent: function() {
+							var val = FixedDataTableDB.apply(null, arguments);
+							if (val) {
+								if (/^http/.test(val)) {
+									return (
+										React.createElement("a", {href: val, className: "button tiny secondary compactButton", target: "_new"}, "view JSON call")
+									);
+								}
+								return val;
+							}
+						}
 					},
 				]
 			},
@@ -21757,7 +21768,21 @@ webpackJsonp([0,1],[
 					},
 					{
 						dataKey: "stories_built_url",
-						displayName: "Stories Built Chart"
+						displayName: "Stories Built Chart",
+						align: "center",
+						customComponent: function() {
+							var params = FixedDataTableDB.objectify.apply(null, arguments)
+								, val = new muDB( params.rowData ).get( 'cname' );
+							if (val) {
+								return (
+									React.createElement("a", {href: 'http://stories-built.e4.r88r.net/'+val+'?hours=168', className: "button tiny secondary compactButton", target: "_new"}, "view chart")
+								);
+							}
+							var stylz = { fontSize: '0.7em' }
+							return (
+								React.createElement("span", {style: stylz}, "no context name?")
+							);
+						}
 					},
 				]
 			},
@@ -21767,15 +21792,57 @@ webpackJsonp([0,1],[
 				columns: [
 					{
 						dataKey: "clear_context_api",
-						displayName: "Clear Context Script"
+						displayName: "Clear Context Script",
+						align: "center",
+						customComponent: function() {
+							var params = FixedDataTableDB.objectify.apply(null, arguments)
+								, val = new muDB( params.rowData ).get( 'cname' );
+							if (val) {
+								return (
+									React.createElement("a", {href: 'http://ws.e4.r88r.net/rssfeedreset?cname='+val, className: "button tiny secondary compactButton", target: "_new"}, "reset rss feed")
+								);
+							}
+							var stylz = { fontSize: '0.7em' }
+							return (
+								React.createElement("span", {style: stylz}, "no context name?")
+							);
+						}
 					},
 					{
 						dataKey: "rerun_feed_api",
-						displayName: "Rerun Feed Script"
+						displayName: "Rerun Feed Script",
+						align: "center",
+						customComponent: function() {
+							var params = FixedDataTableDB.objectify.apply(null, arguments)
+								, val = new muDB( params.rowData ).get( 'cname' );
+							if (val) {
+								return (
+									React.createElement("a", {href: 'http://ws.e4.r88r.net/runfeed?cname='+val, className: "button tiny secondary compactButton", target: "_new"}, "run rss feed")
+								);
+							}
+							var stylz = { fontSize: '0.7em' }
+							return (
+								React.createElement("span", {style: stylz}, "no context name?")
+							);
+						}
 					},
 					{
 						dataKey: "rss_headlines_api",
-						displayName: "RSS Headlines Script"
+						displayName: "RSS Headlines Script",
+						align: "center",
+						customComponent: function() {
+							var params = FixedDataTableDB.objectify.apply(null, arguments)
+								, val = new muDB( params.rowData ).get( 'cname' );
+							if (val) {
+								return (
+									React.createElement("a", {href: 'http://ws.e14.r88r.net/esrss?raw=0&show=headline&cname='+val, className: "button tiny secondary compactButton", target: "_new"}, "view ranking")
+								);
+							}
+							var stylz = { fontSize: '0.7em' }
+							return (
+								React.createElement("span", {style: stylz}, "no context name?")
+							);
+						}
 					},
 				]
 			},

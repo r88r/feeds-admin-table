@@ -22,3 +22,7 @@ body {
 .public_fixedDataTableCell_cellContent {
 	font-size: 0.8em;
 }
+
+.compactButton, button.compactButton, a.compactButton {
+	padding: 4px 4px !important;
+}
