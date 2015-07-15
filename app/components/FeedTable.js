@@ -200,15 +200,15 @@ var FeedsTable = React.createClass({
 						/>
 					);
 				});
-
+				
 				var CGROUP = (
 					<ColumnGroup
 						key={"cg-"+cgIDX}
 						align="center"
 						label={CG.displayName}
+						fixed={(cgIDX == 0)}
 					>{COLUMNS}</ColumnGroup>
 				);
-						//fixed={(cgIDX == 0)}
 				
 				ColumnGroups.push(CGROUP);
 			});
@@ -230,6 +230,7 @@ var FeedsTable = React.createClass({
 					rowHeight={rowHeight}
 					rowGetter={rowGetter}
 					rowsCount={feeds.length}
+			        groupHeaderHeight={36}
 					width={width}
 					maxHeight={height}
 					headerHeight={headerHeight}
