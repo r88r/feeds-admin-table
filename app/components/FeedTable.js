@@ -365,7 +365,7 @@ table_setup = {
 								<a href={'http://stories-built.e4.r88r.net/'+val+'?hours=168'} className="button tiny secondary compactButton" target="_new">view chart</a>
 							);
 						}
-						var stylz = { fontSize: '0.7em' }
+						var stylz = { fontSize: '0.7em' };
 						return (
 							<span style={stylz}>no context name?</span>
 						);
@@ -389,7 +389,7 @@ table_setup = {
 								<a href={'http://ws.e4.r88r.net/rssfeedreset?cname='+val} className="button tiny secondary compactButton" target="_new">reset rss feed</a>
 							);
 						}
-						var stylz = { fontSize: '0.7em' }
+						var stylz = { fontSize: '0.7em' };
 						return (
 							<span style={stylz}>no context name?</span>
 						);
@@ -407,7 +407,7 @@ table_setup = {
 								<a href={'http://ws.e4.r88r.net/runfeed?cname='+val} className="button tiny secondary compactButton" target="_new">run rss feed</a>
 							);
 						}
-						var stylz = { fontSize: '0.7em' }
+						var stylz = { fontSize: '0.7em' };
 						return (
 							<span style={stylz}>no context name?</span>
 						);
@@ -425,7 +425,7 @@ table_setup = {
 								<a href={'http://ws.e14.r88r.net/esrss?raw=0&show=headline&cname='+val} className="button tiny secondary compactButton" target="_new">view ranking</a>
 							);
 						}
-						var stylz = { fontSize: '0.7em' }
+						var stylz = { fontSize: '0.7em' };
 						return (
 							<span style={stylz}>no context name?</span>
 						);
@@ -438,19 +438,19 @@ table_setup = {
 			displayName: "Feed Development 2",
 			columns: [
 				{
-					dataKey: "search_query",
+					dataKey: "search.query.query",
 					displayName: "Search Query String"
 				},
 				{
-					dataKey: "search_num_results",
+					dataKey: "search.size",
 					displayName: "Search, # of Results"
 				},
 				{
-					dataKey: "search_num_days",
+					dataKey: "search.filter.since",
 					displayName: "Search, # of Days"
 				},
 				{
-					dataKey: "search_similar_threshold",
+					dataKey: "sims.sims_thresh",
 					displayName: "Search, Sim Threshold"
 				},
 				{
@@ -459,7 +459,23 @@ table_setup = {
 				},
 				{
 					dataKey: "twitter_list",
-					displayName: "Twitter List"
+					displayName: "Twitter List",
+					customComponent: function() {
+						// twitter_list.owner_name + twitter_list.list_name
+						var params = FixedDataTableDB.objectify.apply(null, arguments)
+							, ownerName = new muDB( params.rowData ).get( 'twitter_list.owner_name' )
+							, listName = new muDB( params.rowData ).get( 'twitter_list.list_name' )
+							;
+						var stylz = { fontSize: '0.7em' };
+						if (ownerName && listName) {
+							return (
+								<span style={stylz}>{ownerName}: {listName}</span>
+							);
+						}
+						return (
+							<span style={stylz}>no twitter list</span>
+						);
+					}
 				},
 			]
 		},

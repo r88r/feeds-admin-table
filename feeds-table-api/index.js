@@ -36,11 +36,16 @@ FEED_TABLE_API.get_feeds_by_namespace = function(conn, data) {
 		return conn.emit('error: no namespace to get feeds with');
 	}
 	var url = 'http://e4brad.r88r.net/v3/monitor_data?ns=' + data.ns;
+	console.log('get monitor data, url: '+url);
 
 	request.get({
 		uri: url,
 		json: true
 	}, function(err, response, body) {
+
+		console.log('monitor data returned....');
+		console.dir(body);
+
 		if (err) {
 			return conn.emit('error getting feed data', { status: 'err', error: err });
 			console.log('error getting feed data');
