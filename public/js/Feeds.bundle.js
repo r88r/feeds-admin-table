@@ -21561,7 +21561,8 @@ webpackJsonp([0,1],[
 					, heightBuffer = 20 // trying to remove the scrollbar
 					, rowHeight = 50
 					, headerHeight = 80
-					, height = (feeds.length * rowHeight) + headerHeight + heightBuffer
+					, groupHeaderHeight = 36
+					, height = (feeds.length * rowHeight) + headerHeight + groupHeaderHeight + heightBuffer
 					;
 				
 				function rowGetter(rowIndex) {
@@ -21643,7 +21644,7 @@ webpackJsonp([0,1],[
 						rowHeight: rowHeight, 
 						rowGetter: rowGetter, 
 						rowsCount: feeds.length, 
-				        groupHeaderHeight: 36, 
+				        groupHeaderHeight: groupHeaderHeight, 
 						width: width, 
 						maxHeight: height, 
 						headerHeight: headerHeight, 
