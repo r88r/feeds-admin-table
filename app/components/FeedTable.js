@@ -1,6 +1,8 @@
 var React = require('react')
 //	, SocketHandler = require('../utils/SocketHandler')
 	, FixedDataTable = require('fixed-data-table')
+	, kfutils = require('../utils/kf-utils')
+	, FormMagic = require('../utils/formRenderEventHandlers')
 	, Table = FixedDataTable.Table
 	, Column = FixedDataTable.Column
 	, ColumnGroup = FixedDataTable.ColumnGroup
@@ -83,7 +85,8 @@ var FeedsTable = React.createClass({
 	
 	getInitialState: function() {
 		return {
-			feeds: []
+			feeds: [],
+			current_context_filter: ''
 		};
 	},
 	
@@ -118,6 +121,11 @@ var FeedsTable = React.createClass({
 		*/
 	},
 	
+	filterContextNames: function(e) {
+		e.preventDefault();
+		console.log('[filterContextNames] key: ' + String.fromCharCode(e.keyCode) );
+	},
+	
 	render: function() {
 		
 		if (this.state.feeds && this.state.feeds.length) {
@@ -126,14 +134,23 @@ var FeedsTable = React.createClass({
 				<p>render the feeds!</p>
 			);*/
 
-			var feeds = this.state.feeds // shorter ref
-				, width = this.componentWidth
-				, height = this.state.windowHeight * 0.75
+			var feeds = this.state.feeds; // shorter ref
+			
+			if (this.state.current_context_filter) {
+				var regexFilter = new RegExp(this.state.current_context_filter);
+				feeds = JSON.parse( JSON.stringify(feeds) );
+				feeds = feeds.filter(function(F) {
+					return regexFilter.test(F.cname);
+				});
+			}
+
+			var width = this.componentWidth
+				, heightBuffer = 20 // trying to remove the scrollbar
+				, rowHeight = 50
+				, headerHeight = 80
+				, height = (feeds.length * rowHeight) + headerHeight + heightBuffer
 				;
 			
-			// testing:
-			height = 500;
-
 			function rowGetter(rowIndex) {
 				return feeds[rowIndex];
 			}
@@ -196,16 +213,26 @@ var FeedsTable = React.createClass({
 				ColumnGroups.push(CGROUP);
 			});
 			
+			var input_stylz = {
+				width: 200,
+				maxWidth: 200
+			}
+
+					//<input name="context_name_filter" ref="context_name_filter" value={this.state.current_context_filter} onChange={this.filterContextNames} style={input_stylz} />
+			
 			return (
 				<div>
 					<h5>{this.props.query} Feeds for Namespace={this.props.current_namespace}</h5>
+					<form>
+					{FormMagic.renderTextInput.call(this, 'current_context_filter', 'Filter contexts by:', this.state.current_context_filter, null, null)}
+					</form>
 				  <Table
-					rowHeight={36}
+					rowHeight={rowHeight}
 					rowGetter={rowGetter}
 					rowsCount={feeds.length}
 					width={width}
 					maxHeight={height}
-					headerHeight={80}
+					headerHeight={headerHeight}
 					scrollTop={0}
 					scrollLeft={0}
 					overflowX="auto"
@@ -439,27 +466,66 @@ table_setup = {
 			columns: [
 				{
 					dataKey: "search.query.query",
-					displayName: "Search Query String"
+					displayName: "Search Query",
+					width: 400,
+					minWidth: 400,
+					maxWidth: 400
 				},
 				{
 					dataKey: "search.size",
-					displayName: "Search, # of Results"
+					displayName: "Search # Results",
+					align: "center",
+					width: 75,
+					minWidth: 75,
+					maxWidth: 75
 				},
 				{
 					dataKey: "search.filter.since",
-					displayName: "Search, # of Days"
+					displayName: "Search # Days",
+					align: "center",
+					width: 75,
+					minWidth: 75,
+					maxWidth: 75
 				},
 				{
 					dataKey: "sims.sims_thresh",
-					displayName: "Search, Sim Threshold"
+					displayName: "Sim Threshold",
+					align: "center",
+					width: 75,
+					minWidth: 75,
+					maxWidth: 75
 				},
 				{
 					dataKey: "streams_url",
-					displayName: "Streams Search URL"
+					displayName: "Streams Search URL",
+					align: "center",
+					customComponent: function() {
+						var params = FixedDataTableDB.objectify.apply(null, arguments)
+							, query = new muDB( params.rowData ).get( 'search.query.query' )
+							, size = new muDB( params.rowData ).get( 'search.size' )
+							, since = new muDB( params.rowData ).get( 'search.filter.since' )
+							, thresh = new muDB( params.rowData ).get( 'sims.sims_thresh' )
+							;
+						if (query && size && since && thresh) {
+							var _q = kfutils._encodeURIComponent(query)
+							return (
+								//http://streams.sociative.net/search/results?keywords=beer&threshold=0.75&count=50&since=10
+								<a href={'http://streams.sociative.net/search/results?keywords='+_q+'&threshold='+thresh+'&count='+size+'&since='+since} className="button tiny secondary compactButton" target="_new">streams search</a>
+							);
+						}
+						return "invalid search vars";
+						var stylz = { fontSize: '0.7em', lineHeight: '0.9em' };
+						return (
+							<span style={stylz}>invalid search vars</span>
+						);
+					}
 				},
 				{
-					dataKey: "twitter_list",
-					displayName: "Twitter List",
+					dataKey: "__twitter_list",
+					displayName: "Twitter List,Owner: List",
+					width: 200,
+					minWidth: 200,
+					maxWidth: 200,
 					customComponent: function() {
 						// twitter_list.owner_name + twitter_list.list_name
 						var params = FixedDataTableDB.objectify.apply(null, arguments)

@@ -10,9 +10,9 @@ webpackJsonp([0,1],[
 		, NamespaceActions = __webpack_require__(1)
 
 		, FeedTable = __webpack_require__(171)
-		, NamespaceSelector = __webpack_require__(227)
+		, NamespaceSelector = __webpack_require__(229)
 
-		, Utils = __webpack_require__(228)
+		, Utils = __webpack_require__(227)
 
 		;
 
@@ -21414,6 +21414,8 @@ webpackJsonp([0,1],[
 	var React = __webpack_require__(12)
 	//	, SocketHandler = require('../utils/SocketHandler')
 		, FixedDataTable = __webpack_require__(172)
+		, kfutils = __webpack_require__(227)
+		, FormMagic = __webpack_require__(228)
 		, Table = FixedDataTable.Table
 		, Column = FixedDataTable.Column
 		, ColumnGroup = FixedDataTable.ColumnGroup
@@ -21496,7 +21498,8 @@ webpackJsonp([0,1],[
 		
 		getInitialState: function() {
 			return {
-				feeds: []
+				feeds: [],
+				current_context_filter: ''
 			};
 		},
 		
@@ -21531,6 +21534,11 @@ webpackJsonp([0,1],[
 			*/
 		},
 		
+		filterContextNames: function(e) {
+			e.preventDefault();
+			console.log('[filterContextNames] key: ' + String.fromCharCode(e.keyCode) );
+		},
+		
 		render: function() {
 			
 			if (this.state.feeds && this.state.feeds.length) {
@@ -21539,14 +21547,23 @@ webpackJsonp([0,1],[
 					<p>render the feeds!</p>
 				);*/
 
-				var feeds = this.state.feeds // shorter ref
-					, width = this.componentWidth
-					, height = this.state.windowHeight * 0.75
+				var feeds = this.state.feeds; // shorter ref
+				
+				if (this.state.current_context_filter) {
+					var regexFilter = new RegExp(this.state.current_context_filter);
+					feeds = JSON.parse( JSON.stringify(feeds) );
+					feeds = feeds.filter(function(F) {
+						return regexFilter.test(F.cname);
+					});
+				}
+
+				var width = this.componentWidth
+					, heightBuffer = 20 // trying to remove the scrollbar
+					, rowHeight = 50
+					, headerHeight = 80
+					, height = (feeds.length * rowHeight) + headerHeight + heightBuffer
 					;
 				
-				// testing:
-				height = 500;
-
 				function rowGetter(rowIndex) {
 					return feeds[rowIndex];
 				}
@@ -21609,16 +21626,26 @@ webpackJsonp([0,1],[
 					ColumnGroups.push(CGROUP);
 				});
 				
+				var input_stylz = {
+					width: 200,
+					maxWidth: 200
+				}
+
+						//<input name="context_name_filter" ref="context_name_filter" value={this.state.current_context_filter} onChange={this.filterContextNames} style={input_stylz} />
+				
 				return (
 					React.createElement("div", null, 
 						React.createElement("h5", null, this.props.query, " Feeds for Namespace=", this.props.current_namespace), 
+						React.createElement("form", null, 
+						FormMagic.renderTextInput.call(this, 'current_context_filter', 'Filter contexts by:', this.state.current_context_filter, null, null)
+						), 
 					  React.createElement(Table, {
-						rowHeight: 36, 
+						rowHeight: rowHeight, 
 						rowGetter: rowGetter, 
 						rowsCount: feeds.length, 
 						width: width, 
 						maxHeight: height, 
-						headerHeight: 80, 
+						headerHeight: headerHeight, 
 						scrollTop: 0, 
 						scrollLeft: 0, 
 						overflowX: "auto", 
@@ -21778,7 +21805,7 @@ webpackJsonp([0,1],[
 									React.createElement("a", {href: 'http://stories-built.e4.r88r.net/'+val+'?hours=168', className: "button tiny secondary compactButton", target: "_new"}, "view chart")
 								);
 							}
-							var stylz = { fontSize: '0.7em' }
+							var stylz = { fontSize: '0.7em' };
 							return (
 								React.createElement("span", {style: stylz}, "no context name?")
 							);
@@ -21802,7 +21829,7 @@ webpackJsonp([0,1],[
 									React.createElement("a", {href: 'http://ws.e4.r88r.net/rssfeedreset?cname='+val, className: "button tiny secondary compactButton", target: "_new"}, "reset rss feed")
 								);
 							}
-							var stylz = { fontSize: '0.7em' }
+							var stylz = { fontSize: '0.7em' };
 							return (
 								React.createElement("span", {style: stylz}, "no context name?")
 							);
@@ -21820,7 +21847,7 @@ webpackJsonp([0,1],[
 									React.createElement("a", {href: 'http://ws.e4.r88r.net/runfeed?cname='+val, className: "button tiny secondary compactButton", target: "_new"}, "run rss feed")
 								);
 							}
-							var stylz = { fontSize: '0.7em' }
+							var stylz = { fontSize: '0.7em' };
 							return (
 								React.createElement("span", {style: stylz}, "no context name?")
 							);
@@ -21838,7 +21865,7 @@ webpackJsonp([0,1],[
 									React.createElement("a", {href: 'http://ws.e14.r88r.net/esrss?raw=0&show=headline&cname='+val, className: "button tiny secondary compactButton", target: "_new"}, "view ranking")
 								);
 							}
-							var stylz = { fontSize: '0.7em' }
+							var stylz = { fontSize: '0.7em' };
 							return (
 								React.createElement("span", {style: stylz}, "no context name?")
 							);
@@ -21851,28 +21878,83 @@ webpackJsonp([0,1],[
 				displayName: "Feed Development 2",
 				columns: [
 					{
-						dataKey: "search_query",
-						displayName: "Search Query String"
+						dataKey: "search.query.query",
+						displayName: "Search Query",
+						width: 400,
+						minWidth: 400,
+						maxWidth: 400
 					},
 					{
-						dataKey: "search_num_results",
-						displayName: "Search, # of Results"
+						dataKey: "search.size",
+						displayName: "Search # Results",
+						align: "center",
+						width: 75,
+						minWidth: 75,
+						maxWidth: 75
 					},
 					{
-						dataKey: "search_num_days",
-						displayName: "Search, # of Days"
+						dataKey: "search.filter.since",
+						displayName: "Search # Days",
+						align: "center",
+						width: 75,
+						minWidth: 75,
+						maxWidth: 75
 					},
 					{
-						dataKey: "search_similar_threshold",
-						displayName: "Search, Sim Threshold"
+						dataKey: "sims.sims_thresh",
+						displayName: "Sim Threshold",
+						align: "center",
+						width: 75,
+						minWidth: 75,
+						maxWidth: 75
 					},
 					{
 						dataKey: "streams_url",
-						displayName: "Streams Search URL"
+						displayName: "Streams Search URL",
+						align: "center",
+						customComponent: function() {
+							var params = FixedDataTableDB.objectify.apply(null, arguments)
+								, query = new muDB( params.rowData ).get( 'search.query.query' )
+								, size = new muDB( params.rowData ).get( 'search.size' )
+								, since = new muDB( params.rowData ).get( 'search.filter.since' )
+								, thresh = new muDB( params.rowData ).get( 'sims.sims_thresh' )
+								;
+							if (query && size && since && thresh) {
+								var _q = kfutils._encodeURIComponent(query)
+								return (
+									//http://streams.sociative.net/search/results?keywords=beer&threshold=0.75&count=50&since=10
+									React.createElement("a", {href: 'http://streams.sociative.net/search/results?keywords='+_q+'&threshold='+thresh+'&count='+size+'&since='+since, className: "button tiny secondary compactButton", target: "_new"}, "streams search")
+								);
+							}
+							return "invalid search vars";
+							var stylz = { fontSize: '0.7em', lineHeight: '0.9em' };
+							return (
+								React.createElement("span", {style: stylz}, "invalid search vars")
+							);
+						}
 					},
 					{
-						dataKey: "twitter_list",
-						displayName: "Twitter List"
+						dataKey: "__twitter_list",
+						displayName: "Twitter List,Owner: List",
+						width: 200,
+						minWidth: 200,
+						maxWidth: 200,
+						customComponent: function() {
+							// twitter_list.owner_name + twitter_list.list_name
+							var params = FixedDataTableDB.objectify.apply(null, arguments)
+								, ownerName = new muDB( params.rowData ).get( 'twitter_list.owner_name' )
+								, listName = new muDB( params.rowData ).get( 'twitter_list.list_name' )
+								;
+							var stylz = { fontSize: '0.7em' };
+							if (ownerName && listName) {
+								return (
+									React.createElement("span", {style: stylz}, ownerName, ": ", listName)
+								);
+							}
+							return (
+								React.createElement("span", {style: stylz}, "no twitter list")
+							);
+						}
 					},
 				]
 			},
@@ -28447,6 +28529,215 @@ webpackJsonp([0,1],[
 
 /***/ },
 /* 227 */
+/***/ function(module, exports) {
+
+	module.exports = {
+
+		getGetVar: function(key, default_) {
+			if (default_==null) { default_=''; }
+			key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+			var regex = new RegExp("[\\?&]"+key+"=([^&#]*)");
+			var qs = regex.exec(window.location.href);
+			if(qs == null) {
+				//console.log('[getGetVar] '+key+', returning default!: ' + default_);
+				return default_;
+			} else {
+				//console.log('[getGetVar] '+key+', returning val!: ' + decodeURIComponent(qs[1]));
+				return decodeURIComponent(qs[1]);
+			}
+		},
+		
+		_encodeURIComponent: function(str) {
+			str = encodeURIComponent(str);
+			str = str.replace('(', '%28');
+			str = str.replace(')', '%29');
+			str = str.replace('|', '%7C');
+			return str;
+		}
+
+	}
+
+/***/ },
+/* 228 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(12)
+
+		, debug = false
+		
+		, _renderField = function(name, label, field) {
+			return (
+				React.createElement("div", null, 
+					React.createElement("div", {className: "large-4 columns"}, 
+						React.createElement("label", {htmlFor: name, className: "inline right"}, label)
+					), 
+					React.createElement("div", {className: "large-8 columns"}, 
+						field
+					), 
+					React.createElement("div", {className: "clearfix"})
+				)
+			);
+		}
+		;
+
+	function handleGenericChange(cb, e) {
+		if (cb) { return cb(e); }
+		else {
+			var node = e.target
+				, params = {}
+				;
+			params[node.name] = node.value;
+
+			if (window.debug) {
+				console.warn('no callback given for form field change event, blindly updating state based on "name" = '+node.name);
+			}
+
+			this.setState(params);
+		}
+	}
+
+	function handleRadioClick(cb, e) {
+		console.log('[handleRadioClick]');
+		console.dir(e);
+		return handleGenericChange.call(this, cb, e);
+	}
+
+	function handleCheckboxClick(cb, e) {
+		console.log('[handleCheckboxClick]');
+		console.dir(e);
+		return handleGenericChange.call(this, cb, e);
+	}
+
+	function handleTextInputChange(cb, e) {
+		return handleGenericChange.call(this, cb, e);
+	}
+
+		
+
+	module.exports = {
+
+		setDebug: function(db) {
+			debug = (db); // "(truthy)"
+		},
+		
+		// exposes above function to export module for external calling
+		// (necessary for custom field render methods not in this package)
+		renderField: function(name, label, field) {
+			return _renderField(name, label, field);
+		},
+		
+		/// GIANT DEV NOTE: this approach so far only works on objects, fails on arrays.
+		/// updating an array will require some serious other handling
+		/// (at least an index reference to get the right object)
+		/// PROBABLY fixed by detecting an array or something??? dunno yet.
+
+		// stateNest USAGE: to allow applying state updates to a nested dictionary within this.state
+
+		updateDataPathState: function(path, value, stateNest) {
+
+	//		console.log('[FormMagic] updateDataPathState ....');
+
+			//var STATE = this.state
+			var STATE = this.setState ? this.state : this
+				, parts = path.split('.')
+				, ref
+				, propname
+				, stateRoot = stateNest ? STATE[stateNest] : STATE
+				;
+	/*
+			console.log('.... this: ' + JSON.stringify(this));
+			console.log('.... path: ' + path);
+			console.log('.... value: ' + value);
+			console.log('.... STATE: ' + JSON.stringify(STATE));
+			console.log('.... stateNest: ' + stateNest);
+			console.log('.... stateRoot: ' + JSON.stringify(stateRoot));
+	//*/
+			if (!stateRoot) { throw new Error('cannot update path in state, no (g)root!'); }
+
+			while (parts.length > 1) {
+				propname = parts.shift();
+				ref = ref !== undefined ? ref[propname] : stateRoot[propname];
+				if (ref === undefined && stateRoot[propname] == undefined) {
+					stateRoot[propname] = {};
+					ref = stateRoot[propname];
+				}
+			}
+
+			propname = parts.shift();
+			if (ref === undefined) { ref = stateRoot }
+
+	//		console.log('.... ref: ' + JSON.stringify(ref));
+
+			ref[propname] = value;
+
+			// allow to be used with plain objects....
+			if (this.setState !== undefined) {
+	//			console.log('.... setting state');
+				STATE.edited = true;
+				this.setState(STATE);
+			} else {
+	//			console.log('.... returning state:');
+	//			console.log( JSON.stringify(STATE) );
+				return STATE;
+			}
+		},
+		
+		renderRadioInputs: function(name, label, value, options, path, cb) {
+			if (debug) {
+				console.log('[renderRadioInputs] field: '+name);
+			}
+			path = path || name;
+			var radios = options.map(function(O, idx) {
+				var checked = O == value ? true : false
+					, KEY = idx + '-' + name
+					;
+				return (
+					React.createElement("span", {key: KEY}, 
+						React.createElement("input", {type: "radio", name: name, value: O, checked: checked, "data-path": path, onChange: handleRadioClick.bind(this, cb)}), " ", O, ' '
+					)
+				);
+			}.bind(this));
+			return _renderField(name, label, radios);
+		},
+		
+		renderBooleanCheckboxInput: function(name, label, checked, path, cb) {
+			if (debug) {
+				console.log('[renderBooleanCheckboxInput] field: '+name+', value: '+value);
+			}
+			path = path || name;
+			return _renderField(name, label,
+				React.createElement("input", {type: "checkbox", name: name, ref: name, "data-boolfield": true, "data-path": path, checked: checked, onChange: handleCheckboxClick.bind(this, cb)})
+			);
+		},
+
+		renderCheckboxInput: function(name, label, value, checked, path, cb) {
+			throw new Error('regular checkbox not supported yet! (as in checkboxes that have non-boolean values');
+			/*
+			if (debug) {
+				console.log('[renderCheckboxInput] field: '+name+', value: '+value);
+			}
+			path = path || name;
+			return _renderField(name, label,
+				<input type="checkbox" name={name} ref={name} data-path={path} checked={checked} onChange={handleCheckboxClick.bind(this, cb)} />
+			);
+			*/
+		},
+
+		renderTextInput: function(name, label, value, path, cb) {
+			if (debug) {
+				console.log('[renderTextInput] field: '+name);
+			}
+			value = value || null;
+			path = path || name;
+			return _renderField(name, label,
+				React.createElement("input", {type: "text", name: name, ref: name, "data-path": path, value: value, onChange: handleTextInputChange.bind(this, cb)})
+			);
+		},
+
+	}
+
+/***/ },
+/* 229 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var React = __webpack_require__(12)
@@ -28550,36 +28841,6 @@ webpackJsonp([0,1],[
 	});
 
 	module.exports = NamespaceSelector;
-
-/***/ },
-/* 228 */
-/***/ function(module, exports) {
-
-	module.exports = {
-
-		getGetVar: function(key, default_) {
-			if (default_==null) { default_=''; }
-			key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-			var regex = new RegExp("[\\?&]"+key+"=([^&#]*)");
-			var qs = regex.exec(window.location.href);
-			if(qs == null) {
-				//console.log('[getGetVar] '+key+', returning default!: ' + default_);
-				return default_;
-			} else {
-				//console.log('[getGetVar] '+key+', returning val!: ' + decodeURIComponent(qs[1]));
-				return decodeURIComponent(qs[1]);
-			}
-		},
-		
-		_encodeURIComponent: function(str) {
-			str = encodeURIComponent(str);
-			str = str.replace('(', '%28');
-			str = str.replace(')', '%29');
-			str = str.replace('|', '%7C');
-			return str;
-		}
-
-	}
 
 /***/ }
 ]);

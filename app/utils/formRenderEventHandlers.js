@@ -25,7 +25,9 @@ function handleGenericChange(cb, e) {
 			;
 		params[node.name] = node.value;
 
-		console.warn('no callback given for form field change event, blindly updating state based on "name" = '+node.name);
+		if (window.debug) {
+			console.warn('no callback given for form field change event, blindly updating state based on "name" = '+node.name);
+		}
 
 		this.setState(params);
 	}
