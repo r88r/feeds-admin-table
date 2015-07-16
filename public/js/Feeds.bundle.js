@@ -21422,6 +21422,8 @@ webpackJsonp([0,1],[
 		
 		
 		, table_setup // definition at end of component
+		
+		, local_debug = true
 
 		;
 
@@ -21446,7 +21448,10 @@ webpackJsonp([0,1],[
 	var FixedDataTableDB = function() {
 		var args = Array.prototype.slice.call(arguments);
 		if (args[0] === undefined && typeof args[1] === 'string' && typeof args[2] === 'object') {
-			return new muDB(args[2]).get(args[1]);
+			//return new muDB(args[2]).get(args[1]);
+			var ret = new muDB(args[2]).get(args[1]);;
+			if (ret === null || ret === undefined) { ret = 0; }
+			return ret;
 		}
 		return args[0];
 	}
@@ -21465,22 +21470,40 @@ webpackJsonp([0,1],[
 	FixedDataTableDB.sortValues = function(stack, CS) {
 		
 		if (!CS) {
-			if (window.debug) {
+			if (local_debug || window.debug) {
 				console.warn('tried to FixedDataTableDB.sortValues with no current_sort (CS)');
 			}
 			return stack;
 		}
 		
 		stack.sort(function(a, b) {
-
+			
 			var oA = new muDB(a)
 				, oB = new muDB(b)
 				, oAVal = oA.get(CS)
 				, oBVal = oB.get(CS)
+				, sortType
 				;
 
+			if ((oAVal === undefined || oAVal === null) && (oBVal === undefined || oBVal === null)) {
+				//if (local_debug || window.debug) console.log('sorting ['+CS+'] ABORT both are und/null');
+				// temp override till we have really clean data
+				oAVal = 0;
+				oBVal = 0;
+			}
+			
+			sortType = (oAVal === undefined || oAVal === null) ? typeof(oABal) : sortType = typeof(oAVal);
+			
+			if (sortType == 'number') {
+				// temp override till we have really clean data
+				if (oAVal === undefined || oAVal === null) oAVal = 0;
+				if (oBVal === undefined || oBVal === null) oBVal = 0;
+			}
+			
+			if (local_debug || window.debug) console.log('sorting ['+CS+'] sort type: '+sortType);
+			
 			if ((oAVal !== undefined && oBVal !== undefined) && (oAVal !== null && oBVal !== null)) {
-				if (typeof oAVal == 'number') {
+				if (sortType == 'number') {
 					if (oAVal < oBVal) return -1;
 					if (oAVal > oBVal) return 1;
 				} else if (typeof oAVal == 'string') {

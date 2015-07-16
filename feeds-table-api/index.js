@@ -43,8 +43,8 @@ FEED_TABLE_API.get_feeds_by_namespace = function(conn, data) {
 		json: true
 	}, function(err, response, body) {
 
-		console.log('monitor data returned....');
-		console.dir(body);
+		//console.log('monitor data returned....');
+		//console.dir(body);
 
 		if (err) {
 			return conn.emit('error getting feed data', { status: 'err', error: err });
@@ -68,6 +68,7 @@ FEED_TABLE_API.get_feeds_by_namespace = function(conn, data) {
 					});
 					body.data = newbody;
 				}
+
 				return conn.emit('feeds-data', { status: 'ok', data: { feeds: body.data } });
 			}
 			return conn.emit('error getting feed data', { status: 'err', error: 'no data returned from body', body: body });
