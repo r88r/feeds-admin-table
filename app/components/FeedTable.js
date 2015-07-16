@@ -7,6 +7,7 @@ var React = require('react')
 	, Column = FixedDataTable.Column
 	, ColumnGroup = FixedDataTable.ColumnGroup
 	
+	
 	, table_setup // definition at end of component
 
 	;
@@ -48,6 +49,38 @@ FixedDataTableDB.objectify = function() {
 	}
 }
 
+FixedDataTableDB.sortValues = function(stack, CS) {
+	
+	if (!CS) {
+		if (window.debug) {
+			console.warn('tried to FixedDataTableDB.sortValues with no current_sort (CS)');
+		}
+		return stack;
+	}
+	
+	stack.sort(function(a, b) {
+
+		var oA = new muDB(a)
+			, oB = new muDB(b)
+			, oAVal = oA.get(CS)
+			, oBVal = oB.get(CS)
+			;
+
+		if ((oAVal !== undefined && oBVal !== undefined) && (oAVal !== null && oBVal !== null)) {
+			if (typeof oAVal == 'number') {
+				if (oAVal < oBVal) return -1;
+				if (oAVal > oBVal) return 1;
+			} else if (typeof oAVal == 'string') {
+				return oAVal.localeCompare(oBVal);
+			}
+		}
+
+		return 0;
+	});
+	
+	return stack;
+}
+
 var RenderSpecialCell = function() {
 	var params = FixedDataTableDB.objectify.apply(null, arguments);
 	
@@ -73,8 +106,51 @@ var RenderSpecialCell = function() {
 			return FixedDataTableDB.apply(null, arguments);
 			break;
 	}
+}
+
+var SortableColumnHeader = React.createClass({
 	
+	handleSort: function(e) {
+		e.preventDefault();
+		this.props.sortCallback(this.props.config.dataKey);
+	},
 	
+	render: function() {
+		
+		var classname = 'sortableColumnHeader'
+			, fa_classname = 'fa';
+		
+		if (this.props.config.sort == this.props.config.dataKey) {
+			classname += '  sorting';
+			switch (this.props.config.dir) {
+				case 1:
+					fa_classname += ' fa-arrow-up';
+					break;
+				case -1:
+					fa_classname += ' fa-arrow-down';
+					break;
+				
+			}
+		}
+		
+		return (
+			<div className={classname} onClick={this.handleSort}><i className={fa_classname}>{" "}{this.props.config.displayName}</i></div>
+		);
+	}
+	
+});
+
+var ColumnHeaderRenderer = function() {
+	var args = Array.prototype.slice.call(arguments)
+		, COL = args[0]
+		;
+	//console.log('[ColumnHeaderRenderer] args');
+	//console.dir(args);
+	if (COL.sortable) {
+		return (<SortableColumnHeader config={COL} sortCallback={args[1]} />)
+	} else {
+		return COL.displayName;
+	}
 }
 
 var FeedsTable = React.createClass({
@@ -86,7 +162,9 @@ var FeedsTable = React.createClass({
 	getInitialState: function() {
 		return {
 			feeds: [],
-			current_context_filter: ''
+			current_context_filter: '',
+			current_sort: 'cname',
+			current_sort_direction: 1
 		};
 	},
 	
@@ -126,15 +204,36 @@ var FeedsTable = React.createClass({
 		console.log('[filterContextNames] key: ' + String.fromCharCode(e.keyCode) );
 	},
 	
+	columnSortCallback: function(columnDataKey) {
+		console.log('[columnSortCallback] args');
+		console.dir(arguments);
+		//return false;
+		if (this.state.current_sort == columnDataKey) {
+			this.setState({
+				current_sort_direction: this.state.current_sort_direction * -1
+			});
+		} else {
+			this.setState({
+				current_sort: columnDataKey,
+				current_sort_direction: 1 // defaults to asc/up
+			});
+		}
+	},
+	
 	render: function() {
 		
 		if (this.state.feeds && this.state.feeds.length) {
 			
-			/*return (
-				<p>render the feeds!</p>
-			);*/
-
 			var feeds = this.state.feeds; // shorter ref
+			
+			if (this.state.current_sort) {
+
+				feeds = FixedDataTableDB.sortValues(feeds, this.state.current_sort);
+				if (this.state.current_sort_direction == -1) {
+					feeds.reverse();
+				}
+				
+			}
 			
 			if (this.state.current_context_filter) {
 				var regexFilter = new RegExp(this.state.current_context_filter);
@@ -143,6 +242,8 @@ var FeedsTable = React.createClass({
 					return regexFilter.test(F.cname);
 				});
 			}
+			
+			console.log('build the table, number of feeds: '+feeds.length);
 
 			var width = this.componentWidth
 				, heightBuffer = 20 // trying to remove the scrollbar
@@ -157,6 +258,9 @@ var FeedsTable = React.createClass({
 			}
 			
 			var cgroups = Object.keys(table_setup.groups)
+				, columnSortCallback = this.columnSortCallback
+				, curSort = this.state.current_sort
+				, curSortDir = this.state.current_sort_direction
 				, ColumnGroups = [];
 			
 			cgroups.forEach(function(CGk, cgIDX) {
@@ -198,6 +302,7 @@ var FeedsTable = React.createClass({
 							isResizeable={true}
 							fixed={fixed}
 							cellRenderer={cellRenderer}
+							headerRenderer={ColumnHeaderRenderer.bind(null, kfutils.mergeRecursive(COL, { sort: curSort, dir: curSortDir}), columnSortCallback)}
 						/>
 					);
 				});
@@ -279,19 +384,26 @@ table_setup = {
 					displayName: "Context Name",
 					width: 200,
 					minWidth: 200,
-					maxWidth: 200
+					maxWidth: 200,
+					sortable: true
 				},
 				{
 					dataKey: "admin_owner",
-					displayName: "Admin Owner"
+					displayName: "Admin Owner",
+					sortable: true
+
 				},
 				{
 					dataKey: "feed_label",
-					displayName: "Feed Label"
+					displayName: "Feed Label",
+					sortable: true
+
 				},
 				{
 					dataKey: "client_id",
-					displayName: "Client ID"
+					displayName: "Client ID",
+					sortable: true
+
 				},
 				{
 					dataKey: "project_id",
@@ -305,23 +417,33 @@ table_setup = {
 			columns: [
 				{
 					dataKey: "formats",
-					displayName: "Feed Format"
+					displayName: "Feed Format",
+					sortable: true
+
 				},
 				{
 					dataKey: "package",
-					displayName: "Feed Package"
+					displayName: "Feed Package",
+					sortable: true
+
 				},
 				{
 					dataKey: "index_bool",
-					displayName: "Index?"
+					displayName: "Index?",
+					sortable: true
+
 				},
 				{
 					dataKey: "monitor_priority",
-					displayName: "Monitor Priority"
+					displayName: "Monitor Priority",
+					sortable: true
+
 				},
 				{
 					dataKey: "crawled_bool",
-					displayName: "Crawled?"
+					displayName: "Crawled?",
+					sortable: true
+
 				},
 				{
 					dataKey: "endpoints.rss",
@@ -351,11 +473,15 @@ table_setup = {
 			columns: [
 				{
 					dataKey: "endpoint_errors",
-					displayName: "Endpoint Error Codes"
+					displayName: "Endpoint Error Codes",
+					sortable: true
+
 				},
 				{
 					dataKey: "task_status",
-					displayName: "Task Status"
+					displayName: "Task Status",
+					sortable: true
+
 				},
 				{
 					dataKey: "story_age_now",
@@ -380,6 +506,7 @@ table_setup = {
 				{
 					dataKey: "feed.task_id",
 					displayName: "Task ID",
+					sortable: true,
 					customComponent: FixedDataTableDB
 				},
 				{
@@ -479,7 +606,9 @@ table_setup = {
 					align: "center",
 					width: 75,
 					minWidth: 75,
-					maxWidth: 75
+					maxWidth: 75,
+					sortable: true
+
 				},
 				{
 					dataKey: "search.filter.since",
@@ -487,7 +616,9 @@ table_setup = {
 					align: "center",
 					width: 75,
 					minWidth: 75,
-					maxWidth: 75
+					maxWidth: 75,
+					sortable: true
+
 				},
 				{
 					dataKey: "sims.sims_thresh",
@@ -495,7 +626,9 @@ table_setup = {
 					align: "center",
 					width: 75,
 					minWidth: 75,
-					maxWidth: 75
+					maxWidth: 75,
+					sortable: true
+
 				},
 				{
 					dataKey: "streams_url",
@@ -523,11 +656,12 @@ table_setup = {
 					}
 				},
 				{
-					dataKey: "__twitter_list",
+					dataKey: "twitter_list",
 					displayName: "Twitter List,Owner: List",
 					width: 200,
 					minWidth: 200,
 					maxWidth: 200,
+					sortable: true,
 					customComponent: function() {
 						// twitter_list.owner_name + twitter_list.list_name
 						var params = FixedDataTableDB.objectify.apply(null, arguments)
