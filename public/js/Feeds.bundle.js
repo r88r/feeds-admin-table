@@ -21448,10 +21448,12 @@ webpackJsonp([0,1],[
 	var FixedDataTableDB = function() {
 		var args = Array.prototype.slice.call(arguments);
 		if (args[0] === undefined && typeof args[1] === 'string' && typeof args[2] === 'object') {
-			//return new muDB(args[2]).get(args[1]);
+			return new muDB(args[2]).get(args[1]);
+			/*
 			var ret = new muDB(args[2]).get(args[1]);;
 			if (ret === null || ret === undefined) { ret = 0; }
 			return ret;
+			*/
 		}
 		return args[0];
 	}
@@ -21485,6 +21487,21 @@ webpackJsonp([0,1],[
 				, sortType
 				;
 
+	// really? this easy?
+			//return (oAVal === null || oAVal === undefined) ? -1 : (oBVal === null || oBVal === undefined) ? 1 : (typeof oAVal === 'string') ? oAVal.localeCompare(oBVal) : ;
+			if (oAVal === null || oAVal === undefined) {
+				return -1;
+			} else if (oBVal === null || oBVal === undefined) {
+				return 1;
+			} else if (typeof oAVal === 'string') {
+				return oAVal.localeCompare(oBVal);
+			} else if (typeof oAVal === 'number' || typeof oAVal === 'boolean') {
+				if (oAVal < oBVal) return -1;
+				if (oAVal > oBVal) return 1;
+			}
+			return 0;
+
+	/*
 			if ((oAVal === undefined || oAVal === null) && (oBVal === undefined || oBVal === null)) {
 				//if (local_debug || window.debug) console.log('sorting ['+CS+'] ABORT both are und/null');
 				// temp override till we have really clean data
@@ -21512,6 +21529,7 @@ webpackJsonp([0,1],[
 			}
 
 			return 0;
+	*/
 		});
 		
 		return stack;
